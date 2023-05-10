@@ -1,0 +1,68 @@
+---
+- name: Setup OS enviroment
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Set hostname
+      hostname: 
+        name: "{{ hostname }}"
+      # shell:
+      #   cmd: "hostnamectl hostname {{hostname}}"
+
+    - name: Create vt_app group
+      group: 
+        name: vt_app
+    #   shell:
+    #     # cmd: groupadd vt_app
+    #     cmd: groupadd -f vt_app
+
+    - name: Setup vt_app user
+      user: 
+        name: vt_app
+        group: vt_app
+    #   shell:
+    #     # cmd: useradd vt_app -g vt_app
+    #     cmd: "(groups vt_app | awk -F ' : ' '{print $2}' | grep vt_app) ||  useradd vt_app -g vt_app"
+
+    - name: Setup DNS server
+      lineinfile:
+        path: /etc/resolv.conf
+        line: nameserver 8.8.8.8
+    #   shell:
+    #     cmd:  echo nameserver 8.8.8.8 >> /etc/resolv.conf
+
+    - name: Update system packages
+      package:
+        pkg: 
+          - curl
+          - wget
+          - htop
+        state: present
+        update_cache: false
+      
+      # when: ansible_facts["distribution"] == "Ubuntu"
+    
+    - name: SSH hardening
+      copy:
+        src: ../templates/ssh_hardening.conf
+        dest: /etc/ssh/sshd_config.d/ssh_hardening.conf
+
+    # - name: Restart SSH
+    #   service: 
+    #     name: sshd
+    #     state: restarted
+    #   shell:
+    #     cmd:  apt update
+
+    # - name: Install utility tools
+    #   shell:
+    #     cmd:  apt install -y curl wget htop
+
+    # - name: Disable SSH root login
+    #   shell:
+    #     cmd:  sed -i 's/^PermitRootLogin. *$/PermitRootLogin no/g' /etc/ssh/sshd_config
+
+    # - name: Restart SSH
+    #   shell:
+    #     cmd: systemctl restart sshd.service
